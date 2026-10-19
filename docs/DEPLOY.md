@@ -41,26 +41,51 @@
      `curl -X POST https://SEU-SITE.netlify.app/.netlify/functions/check-overdue`;
      ou use https://cron-job.org apontando para a mesma URL.
 
-## 3. App Android (gerar o APK)
+## 3. App Android — build automático do APK (sem Android Studio)
+
+Você **não precisa instalar Android Studio nem compilar nada manualmente**.
+O workflow [`.github/workflows/build-apk.yml`](../.github/workflows/build-apk.yml)
+compila, assina e publica o APK sozinho toda vez que algo em `android/` muda
+(ou quando você dispara manualmente). Só precisa configurar 1 segredo
+obrigatório antes do primeiro run:
 
 1. Baixe o `google-services.json` do seu app Android no Firebase Console
    (**Project settings → Your apps → Add app → Android**, package name
-   `com.paylock.agent`) e salve em `android/app/google-services.json`
-   (arquivo ignorado pelo git — nunca commitar).
-2. Abra a pasta `android/` no Android Studio.
-3. **Build → Generate Signed Bundle / APK** → APK → crie/selecione um
-   keystore → gere o APK **release**.
-   - Guarde o keystore com segurança: você precisará da mesma assinatura
-     para futuras atualizações do app, já que ele roda como Device Owner.
-4. Hospede o APK gerado em algum lugar acessível por HTTPS e publicamente
-   baixável durante o provisionamento — por exemplo, como um **GitHub
-   Release** deste mesmo repositório (Releases → Draft a new release →
-   anexe o `.apk`), ou em um bucket do Firebase Hosting/Storage.
-5. Calcule o checksum SHA-256 do APK (exigido pelo provisioning):
+   `com.paylock.agent`).
+2. Converta o arquivo para base64 e salve como segredo do repositório
+   (GitHub → aba **Settings** do repo → **Secrets and variables → Actions →
+   New repository secret**):
    ```bash
    # Linux/Mac
-   shasum -a 256 app-release.apk | cut -d' ' -f1 | xxd -r -p | base64 | tr '/+' '_-' | tr -d '='
+   base64 -w0 google-services.json
+   # cole o resultado no segredo GOOGLE_SERVICES_JSON_BASE64
    ```
+3. Dispare o build: aba **Actions** do repositório → workflow
+   **"Build & Release Android APK"** → **Run workflow**. (Ou simplesmente dê
+   um push mexendo em algo dentro de `android/`.)
+4. Quando terminar, abra a aba **Releases** do repositório: lá estará o
+   `app-release.apk` pronto para baixar, mais o **checksum** já calculado
+   (necessário para o QR Code, ver passo 4 abaixo).
+
+### Sobre a assinatura (keystore) — importante para atualizações futuras
+
+Na **primeira vez** que você rodar o workflow sem configurar um keystore
+próprio, ele gera um automaticamente e avisa isso nas notas do Release,
+anexando o arquivo `release.jks.b64`. **Antes de instalar esse primeiro APK
+em qualquer aparelho de cliente**, salve esse keystore como segredos fixos do
+repositório (copiando os valores exatos que aparecem nas notas do Release):
+
+- `PAYLOCK_KEYSTORE_BASE64` (conteúdo do `release.jks.b64` anexado)
+- `PAYLOCK_KEYSTORE_PASSWORD`
+- `PAYLOCK_KEY_ALIAS`
+- `PAYLOCK_KEY_PASSWORD`
+
+Isso garante que **toda build futura use a mesma assinatura** — essencial
+porque o Android só aceita atualizar um app Device Owner já instalado se a
+nova versão tiver a mesma assinatura da anterior. Se você perder o keystore
+depois de já ter instalado o app em aparelhos de clientes, não vai conseguir
+atualizar esses apps remotamente (só reinstalando do zero via novo
+provisioning).
 
 ## 4. Gerar o QR Code de provisioning (Android Enterprise)
 

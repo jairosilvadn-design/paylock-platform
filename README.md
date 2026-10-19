@@ -14,7 +14,11 @@ soluções como PayJoy e MDMs corporativos (Android Enterprise).
 
 ## Stack (somente estas três ferramentas)
 
-1. **GitHub** — código-fonte (painel web + app Android) e CI/CD.
+1. **GitHub** — código-fonte (painel web + app Android) e CI/CD. O APK do app
+   Android é **compilado, assinado e publicado automaticamente** pelo GitHub
+   Actions ([`.github/workflows/build-apk.yml`](.github/workflows/build-apk.yml))
+   — você não precisa instalar Android Studio nem compilar nada manualmente,
+   só baixar o `.apk` pronto na aba **Releases** (ver `docs/DEPLOY.md`).
 2. **Netlify** — hospedagem do painel web (estático) + Netlify Functions
    (serverless) para os webhooks/backend.
 3. **Firebase**

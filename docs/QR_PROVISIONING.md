@@ -36,11 +36,14 @@ adicionada. O fluxo oficial do Android para isso é o **QR Code provisioning**.
 }
 ```
 
-- `PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM`: gerado no passo 3.5 do
-  [`DEPLOY.md`](DEPLOY.md), a partir do **mesmo APK assinado** hospedado na
-  URL de download.
-- `PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION`: URL HTTPS pública do
-  APK (ex: um GitHub Release attachment).
+- `PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM`: já vem pronto nas notas do
+  Release gerado pelo workflow (ver [`DEPLOY.md`](DEPLOY.md), seção 3) — é
+  calculado automaticamente a partir do mesmo APK publicado.
+- `PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION`: a URL direta do
+  arquivo `.apk` anexado àquele Release (clique com o botão direito no
+  arquivo na aba **Releases** do GitHub → "Copy link address"). Essa URL
+  precisa ficar acessível publicamente durante o provisioning — um asset de
+  Release do GitHub já atende isso.
 - `PROVISIONING_ADMIN_EXTRAS_BUNDLE`: dados extras entregues ao app logo após
   o provisionamento, usados por `onProfileProvisioningComplete` para chamar
   `DeviceIdentity.salvarImei(...)`.

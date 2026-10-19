@@ -4,6 +4,15 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Assinatura do APK release: lida de variáveis de ambiente para que o GitHub
+// Actions (ver .github/workflows/build-apk.yml) consiga assinar o APK sem
+// qualquer intervenção manual (sem Android Studio). Se essas variáveis não
+// existirem (ex: build local de desenvolvimento), o release cai de volta
+// para a assinatura "debug" padrão do Android — útil só para testar no
+// emulador, nunca para instalar em aparelho de cliente real.
+val keystorePath = System.getenv("PAYLOCK_KEYSTORE_PATH")
+val hasReleaseSigning = !keystorePath.isNullOrBlank()
+
 android {
     namespace = "com.paylock.agent"
     compileSdk = 34
@@ -12,13 +21,27 @@ android {
         applicationId = "com.paylock.agent"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = System.getenv("PAYLOCK_VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("PAYLOCK_VERSION_NAME") ?: "1.0"
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(keystorePath!!)
+                storePassword = System.getenv("PAYLOCK_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("PAYLOCK_KEY_ALIAS")
+                keyPassword = System.getenv("PAYLOCK_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
