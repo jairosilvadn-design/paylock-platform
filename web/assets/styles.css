@@ -1,0 +1,103 @@
+:root {
+  --bg: #0f172a;
+  --card: #ffffff;
+  --accent: #2563eb;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+  --text: #0f172a;
+  --muted: #64748b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f1f5f9;
+  color: var(--text);
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.auth-card {
+  background: var(--card);
+  padding: 2.5rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.auth-card h1 { margin: 0 0 .25rem; }
+.subtitle { color: var(--muted); margin-top: 0; }
+
+form label { display: block; margin: .75rem 0 .25rem; font-size: .875rem; }
+form input {
+  width: 100%;
+  padding: .6rem .75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: .6rem 1rem;
+  font-weight: 600;
+}
+
+form > button[type="submit"] {
+  margin-top: 1.25rem;
+  width: 100%;
+  background: var(--accent);
+  color: white;
+}
+
+.error { color: var(--danger); font-size: .875rem; }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--bg);
+  color: white;
+}
+.topbar h1 { margin: 0; font-size: 1.25rem; }
+.link-btn { background: none; color: #93c5fd; margin-left: 1rem; }
+
+.container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid #e2e8f0; font-size: .9rem; }
+
+.badge { padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+.badge-em_dia { background: #dcfce7; color: var(--success); }
+.badge-atrasado { background: #fef3c7; color: var(--warning); }
+.badge-bloqueado { background: #fee2e2; color: var(--danger); }
+
+.btn-bloquear { background: var(--danger); color: white; margin-right: .4rem; }
+.btn-desbloquear { background: var(--success); color: white; }

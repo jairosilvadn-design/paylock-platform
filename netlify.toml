@@ -1,0 +1,20 @@
+[build]
+  publish = "web"
+  functions = "netlify/functions"
+  command = "npm install"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Rotina automática de verificação de vencidos — roda a cada hora.
+# (Scheduled Functions é um recurso do plano pago da Netlify; em plano
+# gratuito, substitua por um "cron externo" chamando esta mesma URL via
+# GitHub Actions / cron-job.org — ver docs/DEPLOY.md.)
+[[functions]]
+  schedule = "@hourly"
+  path = "check-overdue"
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200

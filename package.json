@@ -1,0 +1,15 @@
+{
+  "name": "paylock-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Painel web + Netlify Functions do PayLock (garantia eletrônica de crediário de celular)",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.36.3"
+  }
+}

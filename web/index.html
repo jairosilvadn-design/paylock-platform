@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PayLock — Login</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <h1>PayLock</h1>
+    <p class="subtitle">Painel do lojista</p>
+
+    <form id="login-form">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" required autocomplete="username" />
+
+      <label for="password">Senha</label>
+      <input id="password" type="password" required autocomplete="current-password" />
+
+      <button type="submit">Entrar</button>
+      <p id="login-error" class="error" hidden></p>
+    </form>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="assets/firebase-config.js"></script>
+  <script>
+    firebase.initializeApp(window.PAYLOCK_FIREBASE_CONFIG);
+
+    // Se já estiver logado, pula direto pro dashboard.
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) window.location.href = "dashboard.html";
+    });
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const errorEl = document.getElementById("login-error");
+      errorEl.hidden = true;
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        errorEl.textContent = "Não foi possível entrar: " + (err.message || err.code);
+        errorEl.hidden = false;
+      }
+    });
+  </script>
+</body>
+</html>

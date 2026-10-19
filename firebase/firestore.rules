@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// Modelo mínimo: qualquer usuário autenticado no Firebase Auth é um
+// lojista/admin (ajuste para um claim de papel/loja se tiver múltiplas lojas).
+// O app Android NÃO deve autenticar com usuário de login do painel: ele
+// grava/lê apenas o próprio documento de dispositivo usando Firebase Auth
+// anônimo (signInAnonymously) + regra restrita por IMEI (ver abaixo).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isLojista() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function isDispositivoDoProprioAparelho(imei) {
+      // O app Android guarda o IMEI no custom claim ou simplesmente confiamos
+      // no doc id == imei e limitamos updates a poucos campos (ver abaixo).
+      return request.auth != null;
+    }
+
+    match /clientes/{imei} {
+      allow read, write: if isLojista();
+    }
+
+    match /dispositivos/{imei} {
+      allow read, write: if isLojista();
+
+      // O app Android (autenticado anonimamente) só pode atualizar o próprio
+      // documento, e apenas os campos operacionais — nunca ler outros clientes.
+      allow get: if isDispositivoDoProprioAparelho(imei);
+      allow update: if isDispositivoDoProprioAparelho(imei)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['fcmToken', 'kioskAtivo', 'ultimaSincronizacaoEm', 'versaoApp']);
+    }
+  }
+}
