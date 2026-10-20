@@ -52,6 +52,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    buildFeatures {
+        // Necessário para usar BuildConfig.VERSION_NAME em
+        // PayLockMessagingService.kt (reporta a versão do app ao Firestore).
+        buildConfig = true
+    }
 }
 
 dependencies {
