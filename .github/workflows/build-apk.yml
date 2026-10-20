@@ -35,6 +35,12 @@ jobs:
 
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # O pacote legado "tools" foi descontinuado pela Google e removido
+          # do repositório do SDK — instalar só platform-tools aqui. O
+          # Gradle/AGP baixa sozinho platforms/build-tools que faltarem
+          # durante o build, já com as licenças aceitas por esta action.
+          packages: "platform-tools"
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
