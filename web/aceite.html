@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PayLock — Termo de Adesão</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <style>
+    .aceite-wrap { max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    .termo-texto { white-space: pre-line; font-size: .95rem; line-height: 1.6; max-height: 50vh; overflow-y: auto; background: #f8fafc; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .resumo { background: #eff6ff; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .checkbox-linha { display: flex; align-items: flex-start; gap: .5rem; margin: 1rem 0; }
+    #btnAceitar:disabled { opacity: .5; cursor: not-allowed; }
+    .ok-box { background: #dcfce7; border-radius: 8px; padding: 1rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <main class="aceite-wrap">
+    <div class="card">
+      <h1>Termo de Adesão — PayLock</h1>
+      <div id="loading">Carregando...</div>
+      <div id="conteudo" hidden>
+        <div class="resumo">
+          <strong id="nomeCliente"></strong><br />
+          Valor da parcela: <strong id="valorParcela"></strong><br />
+          Vencimento: <strong id="vencimento"></strong>
+        </div>
+
+        <div id="blocoNaoAceito">
+          <div class="termo-texto" id="termoTexto"></div>
+
+          <label class="checkbox-linha">
+            <input type="checkbox" id="checkLi" />
+            <span>Li e concordo com os termos acima.</span>
+          </label>
+
+          <button id="btnAceitar" disabled>Aceitar e baixar o app</button>
+        </div>
+
+        <div id="blocoJaAceito" class="ok-box" hidden>
+          ✅ Termo já aceito em <span id="dataAceite"></span>.
+          <br /><br />
+          <a id="linkDownloadJaAceito" href="#">Baixar o app novamente</a>
+        </div>
+      </div>
+      <div id="erro" hidden class="error"></div>
+    </div>
+  </main>
+
+  <script>
+    const APK_URL = "https://github.com/jairosilvadn-design/paylock-platform/releases/latest/download/app-release.apk";
+
+    const params = new URLSearchParams(window.location.search);
+    const clienteId = params.get("cliente");
+
+    const el = (id) => document.getElementById(id);
+
+    async function carregar() {
+      if (!clienteId) {
+        el("loading").hidden = true;
+        el("erro").hidden = false;
+        el("erro").textContent = "Link inválido: falta o identificador do cliente.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/.netlify/functions/termo-info?clienteId=${encodeURIComponent(clienteId)}`);
+        if (!res.ok) throw new Error((await res.json()).error || "Erro ao carregar dados");
+        const info = await res.json();
+
+        el("nomeCliente").textContent = info.nome || "Cliente";
+        el("valorParcela").textContent = "R$ " + Number(info.valorParcela || 0).toFixed(2);
+        el("vencimento").textContent = info.vencimento || "-";
+        el("termoTexto").textContent = TERMO_TEXTO;
+
+        if (info.termoAceito) {
+          el("blocoNaoAceito").hidden = true;
+          el("blocoJaAceito").hidden = false;
+          el("dataAceite").textContent = info.termoDataHoraISO
+            ? new Date(info.termoDataHoraISO).toLocaleString("pt-BR")
+            : "-";
+          el("linkDownloadJaAceito").href = APK_URL;
+        }
+
+        el("loading").hidden = true;
+        el("conteudo").hidden = false;
+      } catch (err) {
+        el("loading").hidden = true;
+        el("erro").hidden = false;
+        el("erro").textContent = err.message;
+      }
+    }
+
+    el("checkLi").addEventListener("change", (e) => {
+      el("btnAceitar").disabled = !e.target.checked;
+    });
+
+    el("btnAceitar").addEventListener("click", async () => {
+      el("btnAceitar").disabled = true;
+      el("btnAceitar").textContent = "Registrando aceite...";
+      try {
+        const res = await fetch("/.netlify/functions/aceitar-termo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clienteId }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Erro ao registrar aceite");
+
+        window.location.href = APK_URL;
+      } catch (err) {
+        alert("Erro: " + err.message);
+        el("btnAceitar").disabled = false;
+        el("btnAceitar").textContent = "Aceitar e baixar o app";
+      }
+    });
+
+    const TERMO_TEXTO = `TERMO DE ADESÃO AO PROGRAMA DE FINANCIAMENTO DE APARELHO CELULAR COM GARANTIA ELETRÔNICA (PAYLOCK)
+
+1. Garantia eletrônica. Enquanto houver saldo devedor, o aparelho terá instalado um aplicativo de administração remota ("Agente PayLock"), que permite à loja credora: (a) exibir avisos de cobrança quando houver atraso no pagamento, podendo restringir o uso do aparelho; e (b) restaurar o uso normal automaticamente após a confirmação do pagamento.
+
+2. Não é monitoramento. O Agente PayLock NÃO acessa mensagens, fotos, contatos, localização ou qualquer conteúdo pessoal do aparelho. Suas únicas funções são aplicar/remover restrições de uso e exibir os dados de pagamento pendente (valor e chave PIX).
+
+3. Permissão solicitada. Ao instalar o aplicativo, o Android vai pedir a permissão de "Administrador do dispositivo". Isso é necessário para que o app funcione mesmo com a tela bloqueada e para dificultar a remoção acidental enquanto houver saldo devedor. Você pode revogar essa permissão a qualquer momento em Configurações > Segurança > Administradores do dispositivo.
+
+4. Quitação e liberação. Ao quitar integralmente o valor financiado, você tem direito à remoção imediata e gratuita das restrições e, se desejar, do próprio aplicativo.
+
+5. Dados pessoais (LGPD). Os dados cadastrais (nome, IMEI, chave PIX, histórico de pagamentos) são tratados exclusivamente para fins de gestão do financiamento, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).
+
+Ao tocar em "Aceitar e baixar o app", você confirma que leu e concorda com os termos acima, e que esta aceitação (com data, hora e IP) ficará registrada.`;
+
+    carregar();
+  </script>
+</body>
+</html>
