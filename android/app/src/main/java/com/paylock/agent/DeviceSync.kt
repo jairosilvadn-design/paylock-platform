@@ -1,6 +1,7 @@
 package com.paylock.agent
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -70,7 +71,14 @@ object DeviceSync {
                     "deviceId" to deviceId,
                     "fcmToken" to fcmToken,
                     "ultimaSincronizacaoEm" to System.currentTimeMillis(),
-                    "versaoApp" to BuildConfig.VERSION_NAME
+                    "versaoApp" to BuildConfig.VERSION_NAME,
+                    // Informações do aparelho — o Android deixa ler isso sem
+                    // nenhuma permissão especial, então o lojista nunca
+                    // precisa digitar o modelo manualmente.
+                    "marca" to Build.MANUFACTURER,
+                    "modelo" to Build.MODEL,
+                    "versaoAndroid" to Build.VERSION.RELEASE,
+                    "sdkInt" to Build.VERSION.SDK_INT
                 ),
                 SetOptions.merge()
             )

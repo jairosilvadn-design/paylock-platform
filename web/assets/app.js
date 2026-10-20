@@ -77,7 +77,7 @@ function cancelarEdicao() {
 }
 
 /** Abre o formulário pré-preenchido pra completar um aparelho pendente. */
-function configurarPendente(deviceId, termoDataHoraISO) {
+async function configurarPendente(deviceId) {
   configurandoPendente = true;
   document.getElementById("imei").value = deviceId;
   document.getElementById("imei").readOnly = true;
@@ -85,6 +85,23 @@ function configurarPendente(deviceId, termoDataHoraISO) {
   document.getElementById("form-titulo").textContent = `Completar cadastro — aparelho ${deviceId}`;
   document.getElementById("btnCancelarEdicao").hidden = false;
   document.getElementById("cliente-form").scrollIntoView({ behavior: "smooth" });
+
+  // Modelo/marca/versão do Android já vieram sozinhos do app — preenche
+  // automaticamente, o lojista não precisa digitar nada disso.
+  const info = await obterInfoDispositivo(deviceId);
+  if (info) {
+    document.getElementById("modelo").value = formatarInfoDispositivo(info);
+  }
+}
+
+async function obterInfoDispositivo(deviceId) {
+  const snap = await db.collection("dispositivos").doc(deviceId).get();
+  return snap.exists ? snap.data() : null;
+}
+
+function formatarInfoDispositivo(info) {
+  const partes = [info.marca, info.modelo].filter(Boolean).join(" ");
+  return info.versaoAndroid ? `${partes} (Android ${info.versaoAndroid})` : partes;
 }
 
 // ---------------------------------------------------------------------------
@@ -93,27 +110,29 @@ function configurarPendente(deviceId, termoDataHoraISO) {
 function watchClientes() {
   db.collection("clientes")
     .orderBy("criadoEm", "desc")
-    .onSnapshot((snapshot) => {
+    .onSnapshot(async (snapshot) => {
       const pendentesTbody = document.getElementById("pendentes-tbody");
       const clientesTbody = document.getElementById("clientes-tbody");
       pendentesTbody.innerHTML = "";
       clientesTbody.innerHTML = "";
 
-      snapshot.forEach((doc) => {
+      for (const doc of snapshot.docs) {
         const c = doc.data();
 
         if (c.status === "PENDENTE_CONFIGURACAO") {
           const dataAceite = c.termo?.dataHoraISO
             ? new Date(c.termo.dataHoraISO).toLocaleString("pt-BR")
             : "-";
+          const info = await obterInfoDispositivo(doc.id);
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td><code>${escapeHtml(doc.id)}</code></td>
+            <td>${escapeHtml(info ? formatarInfoDispositivo(info) : "sincronizando...")}</td>
             <td>${escapeHtml(dataAceite)}</td>
             <td><button class="btn-configurar" data-id="${doc.id}">Configurar</button></td>
           `;
           pendentesTbody.appendChild(tr);
-          return;
+          continue;
         }
 
         const tr = document.createElement("tr");
@@ -129,7 +148,7 @@ function watchClientes() {
           </td>
         `;
         clientesTbody.appendChild(tr);
-      });
+      }
 
       pendentesTbody.querySelectorAll(".btn-configurar").forEach((btn) =>
         btn.addEventListener("click", () => configurarPendente(btn.dataset.id))

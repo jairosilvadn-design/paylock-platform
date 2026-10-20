@@ -37,7 +37,10 @@ service cloud.firestore {
       allow get: if isAparelhoAnonimo();
       allow create, update: if isAparelhoAnonimo()
         && request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys()
-             .hasOnly(['deviceId', 'fcmToken', 'kioskAtivo', 'ultimaSincronizacaoEm', 'versaoApp']);
+             .hasOnly([
+               'deviceId', 'fcmToken', 'kioskAtivo', 'ultimaSincronizacaoEm', 'versaoApp',
+               'marca', 'modelo', 'versaoAndroid', 'sdkInt'
+             ]);
     }
   }
 }
