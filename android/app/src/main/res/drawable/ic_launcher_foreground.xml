@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cadeado simples em branco, representando o PayLock. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,30 C46.8,30 41,35.8 41,43 L41,50 L37,50 C34.8,50 33,51.8 33,54 L33,76 C33,78.2 34.8,80 37,80 L71,80 C73.2,80 75,78.2 75,76 L75,54 C75,51.8 73.2,50 71,50 L67,50 L67,43 C67,35.8 61.2,30 54,30 Z M54,37 C57.9,37 61,40.1 61,44 L61,50 L47,50 L47,44 C47,40.1 50.1,37 54,37 Z" />
+</vector>
