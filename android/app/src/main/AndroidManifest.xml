@@ -28,6 +28,13 @@
             android:excludeFromRecents="true"
             android:launchMode="singleTask" />
 
+        <!-- Tela de aceite do Termo de Adesão: ponto único onde "pessoa aceita
+             -> sistema executa" acontece (Device Owner completo ou só Admin
+             de Dispositivo, dependendo de como o app foi instalado). -->
+        <activity
+            android:name=".TermsActivity"
+            android:exported="false" />
+
         <!-- Recebida durante o provisionamento Android Enterprise (QR Code /
              afw#setup) para configurar o Device Owner. -->
         <receiver

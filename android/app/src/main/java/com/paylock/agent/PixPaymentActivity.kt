@@ -56,9 +56,13 @@ class PixPaymentActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Garante que, mesmo se o usuário tentar sair (home, recents), a tela
-        // volte ao modo kiosk enquanto o bloqueio estiver ativo.
-        startLockTask()
+        // Lock Task Mode (impede sair pelo Home/Recents) só é possível —
+        // e só é chamado — quando o app é Device Owner. No modo simplificado
+        // (Admin de Dispositivo), a tela abre normalmente como um aviso forte,
+        // mas a pessoa consegue sair apertando Home.
+        if (PayLockDeviceAdminReceiver.isDeviceOwner(this)) {
+            startLockTask()
+        }
     }
 
     override fun onDestroy() {
@@ -67,8 +71,11 @@ class PixPaymentActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        // Intencional: o botão Voltar não deve sair da tela de pagamento
-        // enquanto o aparelho estiver bloqueado.
+        if (PayLockDeviceAdminReceiver.isDeviceOwner(this)) {
+            // Intencional: no modo Kiosk real, o botão Voltar não sai da tela.
+            return
+        }
+        super.onBackPressed()
     }
 
     private fun copiarChavePix() {

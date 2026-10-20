@@ -38,15 +38,14 @@ class PayLockDeviceAdminReceiver : DeviceAdminReceiver() {
 
     /**
      * Disparado automaticamente ao final do provisionamento Android Enterprise
-     * (fluxo do QR Code). É o melhor lugar para aplicar as políticas de
-     * restrição definidas no Termo de Adesão.
+     * (fluxo do QR Code / ADB). As restrições só são aplicadas depois que a
+     * pessoa aceitar o Termo de Adesão dentro do app (ver TermsActivity) —
+     * aqui só abrimos o app, que decide o que mostrar.
      */
     override fun onProfileProvisioningComplete(context: Context, intent: Intent) {
         super.onProfileProvisioningComplete(context, intent)
-        Log.i(TAG, "Provisionamento concluído. Aplicando políticas iniciais.")
-        DevicePolicyEnforcer(context).aplicarPoliticasIniciais()
+        Log.i(TAG, "Provisionamento (Device Owner) concluído. Aguardando aceite do termo.")
 
-        // Abre o app para o lojista confirmar que o aparelho sincronizou.
         val launch = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }

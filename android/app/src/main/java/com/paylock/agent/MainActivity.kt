@@ -1,26 +1,38 @@
 package com.paylock.agent
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * Tela padrão do app, aberta pelo launcher ou ao final do provisionamento.
- * Mostra o status do financiamento quando o aparelho NÃO está em modo kiosk
- * (uso normal). Em produção, busque o status em tempo real no Firestore
- * (`clientes/{imei}`), análogo ao `dashboard.html` do painel.
+ * Tela padrão do app. No primeiro uso, leva direto para o Termo de Adesão
+ * (TermsActivity) — é lá que o fluxo "pessoa aceita → sistema executa"
+ * acontece, tanto no caminho completo (Device Owner) quanto no simplificado
+ * (Admin de Dispositivo).
  */
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val prefs = getSharedPreferences("paylock_prefs", MODE_PRIVATE)
+        if (!TermsActivity.termoAceito(prefs)) {
+            startActivity(Intent(this, TermsActivity::class.java))
+            finish()
+            return
+        }
 
         val status = TextView(this).apply {
             textSize = 16f
             setPadding(48, 96, 48, 48)
             text = buildString {
                 append("PayLock — Agente instalado\n\n")
-                append(if (PayLockDeviceAdminReceiver.isDeviceOwner(this@MainActivity))
-                    "Status: Device Owner ativo.\n" else "Status: aguardando provisionamento.\n")
+                append(
+                    if (PayLockDeviceAdminReceiver.isDeviceOwner(this@MainActivity))
+                        "Modo: Device Owner (controle completo).\n"
+                    else
+                        "Modo: Admin de Dispositivo (simplificado).\n"
+                )
                 append("IMEI: ${DeviceIdentity.obterImei(this@MainActivity) ?: "não configurado"}")
             }
         }

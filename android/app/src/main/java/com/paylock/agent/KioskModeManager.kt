@@ -55,30 +55,39 @@ class KioskModeManager(private val context: Context) {
         return permitidos.toTypedArray()
     }
 
-    /** Ativa o bloqueio: define os pacotes permitidos e entra em Lock Task Mode. */
+    /**
+     * Ativa o aviso de cobrança. O comportamento depende do modo em que o
+     * app foi instalado (decidido fora do app, no momento do provisioning):
+     *  - Device Owner: Modo Kiosk real — define pacotes permitidos e a tela
+     *    de pagamento entra em Lock Task Mode (outros apps ficam ocultos).
+     *  - Admin de Dispositivo (modo simplificado): sem Lock Task Mode (o
+     *    Android não permite isso sem ser Device Owner). A tela de pagamento
+     *    só abre em tela cheia como um aviso forte — a pessoa consegue
+     *    apertar Home e usar o celular normalmente.
+     */
     fun ativarKiosk(activity: Activity) {
-        if (!PayLockDeviceAdminReceiver.isDeviceOwner(context)) {
-            Log.e(TAG, "Não é Device Owner — não é possível ativar o kiosk.")
-            return
+        val isOwner = PayLockDeviceAdminReceiver.isDeviceOwner(context)
+
+        if (isOwner) {
+            dpm.setLockTaskPackages(admin, pacotesPermitidos())
+            // Restringe as teclas físicas que normalmente escapam do kiosk.
+            dpm.setLockTaskFeatures(
+                admin,
+                DevicePolicyManager.LOCK_TASK_FEATURE_HOME or
+                    DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS
+            )
+            Log.i(TAG, "Kiosk (Device Owner) ativado. Pacotes permitidos: ${pacotesPermitidos().joinToString()}")
+        } else {
+            Log.i(TAG, "Sem Device Owner — exibindo aviso de cobrança sem Lock Task Mode.")
         }
-
-        dpm.setLockTaskPackages(admin, pacotesPermitidos())
-
-        // Restringe as teclas físicas que normalmente escapam do kiosk.
-        dpm.setLockTaskFeatures(
-            admin,
-            DevicePolicyManager.LOCK_TASK_FEATURE_HOME or
-                DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS
-        )
 
         val intent = Intent(context, PixPaymentActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         context.startActivity(intent)
         marcarEstado(ativo = true)
-
-        // A própria PixPaymentActivity chama startLockTask() no onCreate/onResume.
-        Log.i(TAG, "Kiosk ativado. Pacotes permitidos: ${pacotesPermitidos().joinToString()}")
+        // A própria PixPaymentActivity decide se chama startLockTask() (só
+        // quando for Device Owner — ver onResume() dela).
     }
 
     /** Desativa o bloqueio e devolve o uso normal do aparelho. */

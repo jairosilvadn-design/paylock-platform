@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">PayLock</string>
+    <string name="texto_termo_adesao">
+Ao tocar em "Aceitar", declaro estar ciente e de acordo com as condições do financiamento/uso deste aparelho junto à empresa responsável:
+
+1. Enquanto houver saldo devedor (ou enquanto este aparelho estiver sob gestão da empresa), o PayLock pode exibir avisos de pagamento pendente e dificultar a remoção do app sem autorização.
+
+2. O PayLock NÃO acessa mensagens, fotos, contatos ou localização. Suas únicas funções são aplicar/remover avisos de cobrança e, quando aplicável, restringir o uso do aparelho.
+
+3. Após a quitação/liberação, as restrições são removidas automaticamente ou mediante solicitação.
+
+4. Em caso de dúvida ou bloqueio indevido, entre em contato com a empresa responsável por este aparelho.
+
+Veja o texto completo em: github.com/jairosilvadn-design/paylock-platform/blob/main/docs/TERMO_ADESAO.md
+    </string>
 </resources>
