@@ -35,6 +35,12 @@
             android:name=".TermsActivity"
             android:exported="false" />
 
+        <!-- Pede o IMEI/código do cliente quando o app não o recebeu
+             automaticamente via provisioning (modo Admin de Dispositivo). -->
+        <activity
+            android:name=".VincularAparelhoActivity"
+            android:exported="false" />
+
         <!-- Recebida durante o provisionamento Android Enterprise (QR Code /
              afw#setup) para configurar o Device Owner. -->
         <receiver

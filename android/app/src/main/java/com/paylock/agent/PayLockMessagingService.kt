@@ -2,7 +2,6 @@ package com.paylock.agent
 
 import android.content.Intent
 import android.util.Log
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -23,7 +22,10 @@ class PayLockMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        salvarTokenNoFirestore(token)
+        val imei = DeviceIdentity.obterImei(this) ?: return
+        AnonymousAuth.ensureSignedIn { sucesso ->
+            if (sucesso) DeviceSync.gravar(imei, token)
+        }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -54,21 +56,6 @@ class PayLockMessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun salvarTokenNoFirestore(token: String) {
-        val imei = DeviceIdentity.obterImei(this) ?: return
-        FirebaseFirestore.getInstance()
-            .collection("dispositivos")
-            .document(imei)
-            .set(
-                mapOf(
-                    "fcmToken" to token,
-                    "ultimaSincronizacaoEm" to System.currentTimeMillis(),
-                    "versaoApp" to BuildConfig.VERSION_NAME
-                ),
-                com.google.firebase.firestore.SetOptions.merge()
-            )
-            .addOnFailureListener { Log.e(TAG, "Falha ao salvar fcmToken", it) }
-    }
 }
 
 const val ACTION_DESBLOQUEAR = "com.paylock.agent.ACTION_DESBLOQUEAR"

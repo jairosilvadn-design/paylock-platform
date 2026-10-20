@@ -5,6 +5,8 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.PersistableBundle
 import android.util.Log
 
 /**
@@ -45,6 +47,22 @@ class PayLockDeviceAdminReceiver : DeviceAdminReceiver() {
     override fun onProfileProvisioningComplete(context: Context, intent: Intent) {
         super.onProfileProvisioningComplete(context, intent)
         Log.i(TAG, "Provisionamento (Device Owner) concluído. Aguardando aceite do termo.")
+
+        // O QR Code / comando ADB pode entregar o IMEI/código do cliente via
+        // PROVISIONING_ADMIN_EXTRAS_BUNDLE (ver docs/QR_PROVISIONING.md) — se
+        // vier, já salva aqui, evitando que a pessoa precise digitar na mão
+        // (VincularAparelhoActivity só aparece quando isso falta).
+        @Suppress("DEPRECATION")
+        val extras: PersistableBundle? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                intent.getParcelableExtra(DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, PersistableBundle::class.java)
+            else
+                intent.getParcelableExtra(DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE)
+
+        extras?.getString("imei")?.takeIf { it.isNotBlank() }?.let { imei ->
+            DeviceIdentity.salvarImei(context, imei)
+            Log.i(TAG, "IMEI recebido do provisioning: $imei")
+        }
 
         val launch = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
