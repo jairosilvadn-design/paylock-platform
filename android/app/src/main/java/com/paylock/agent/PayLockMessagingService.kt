@@ -22,9 +22,9 @@ class PayLockMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        val imei = DeviceIdentity.obterImei(this) ?: return
+        val deviceId = DeviceIdentity.obterDeviceId(this)
         AnonymousAuth.ensureSignedIn { sucesso ->
-            if (sucesso) DeviceSync.gravar(imei, token)
+            if (sucesso) DeviceSync.gravar(deviceId, token)
         }
     }
 

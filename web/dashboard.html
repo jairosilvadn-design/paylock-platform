@@ -16,8 +16,23 @@
   </header>
 
   <main class="container">
+    <section class="card" id="card-pendentes">
+      <h2>Aparelhos aguardando configuração</h2>
+      <p class="hint">Aparelhos que já baixaram o app e aceitaram o termo sozinhos — falta só você completar os dados comerciais de cada um.</p>
+      <table id="pendentes-table">
+        <thead>
+          <tr>
+            <th>Código do aparelho</th>
+            <th>Termo aceito em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="pendentes-tbody"></tbody>
+      </table>
+    </section>
+
     <section class="card">
-      <h2>Cadastrar cliente / aparelho</h2>
+      <h2 id="form-titulo">Cadastrar cliente / aparelho</h2>
       <form id="cliente-form">
         <div class="grid">
           <div>
@@ -29,8 +44,8 @@
             <input id="cpf" required />
           </div>
           <div>
-            <label for="imei">IMEI do aparelho</label>
-            <input id="imei" required pattern="[0-9]{15}" title="15 dígitos" />
+            <label for="imei">Código do aparelho / IMEI</label>
+            <input id="imei" required />
           </div>
           <div>
             <label for="modelo">Modelo do aparelho</label>
@@ -41,19 +56,29 @@
             <input id="valor" type="number" step="0.01" required />
           </div>
           <div>
+            <label for="qtdParcelas">Quantidade de parcelas</label>
+            <input id="qtdParcelas" type="number" min="1" step="1" />
+          </div>
+          <div>
             <label for="vencimento">Dia de vencimento (próxima parcela)</label>
             <input id="vencimento" type="date" required />
+          </div>
+          <div>
+            <label for="horarioAlerta">Horário do alerta de cobrança</label>
+            <input id="horarioAlerta" type="time" value="09:00" />
           </div>
           <div>
             <label for="pix">Chave PIX (recebimento)</label>
             <input id="pix" required />
           </div>
           <div>
-            <label><input id="termoAceito" type="checkbox" required /> Cliente assinou o
-              <a href="../docs/TERMO_ADESAO.md" target="_blank">Termo de Adesão</a></label>
+            <label><input id="termoAceito" type="checkbox" /> Cliente assinou o
+              <a href="../docs/TERMO_ADESAO.md" target="_blank">Termo de Adesão</a>
+              <span class="hint">(marcado automaticamente se o aparelho já aceitou pelo app)</span></label>
           </div>
         </div>
         <button type="submit">Salvar cliente</button>
+        <button type="button" id="btnCancelarEdicao" hidden>Cancelar</button>
       </form>
     </section>
 

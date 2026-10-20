@@ -1,10 +1,10 @@
 rules_version = '2';
 
-// Modelo mínimo: qualquer usuário autenticado no Firebase Auth é um
-// lojista/admin (ajuste para um claim de papel/loja se tiver múltiplas lojas).
-// O app Android NÃO deve autenticar com usuário de login do painel: ele
-// grava/lê apenas o próprio documento de dispositivo usando Firebase Auth
-// anônimo (signInAnonymously) + regra restrita por IMEI (ver abaixo).
+// Modelo mínimo: qualquer usuário autenticado no Firebase Auth que NÃO seja
+// anônimo é um lojista/admin (ajuste para um claim de papel/loja se tiver
+// múltiplas lojas). O app Android NÃO loga como lojista: ele se autentica
+// de forma anônima (signInAnonymously) e só consegue criar/atualizar o
+// próprio registro, com um conjunto bem restrito de campos.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -12,25 +12,32 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
-    function isDispositivoDoProprioAparelho(imei) {
-      // O app Android guarda o IMEI no custom claim ou simplesmente confiamos
-      // no doc id == imei e limitamos updates a poucos campos (ver abaixo).
-      return request.auth != null;
+    function isAparelhoAnonimo() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous';
     }
 
-    match /clientes/{imei} {
+    match /clientes/{deviceId} {
       allow read, write: if isLojista();
+
+      // Auto-registro: o próprio app cria o registro, uma única vez, como
+      // "aguardando configuração" — o lojista completa o resto depois. Só
+      // aceita os campos abaixo, e só quando o documento ainda não existe.
+      allow create: if isAparelhoAnonimo()
+        && !exists(/databases/$(database)/documents/clientes/$(deviceId))
+        && request.resource.data.status == 'PENDENTE_CONFIGURACAO'
+        && request.resource.data.keys().hasOnly(['status', 'termo', 'criadoEm']);
     }
 
-    match /dispositivos/{imei} {
+    match /dispositivos/{deviceId} {
       allow read, write: if isLojista();
 
-      // O app Android (autenticado anonimamente) só pode atualizar o próprio
-      // documento, e apenas os campos operacionais — nunca ler outros clientes.
-      allow get: if isDispositivoDoProprioAparelho(imei);
-      allow update: if isDispositivoDoProprioAparelho(imei)
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['fcmToken', 'kioskAtivo', 'ultimaSincronizacaoEm', 'versaoApp']);
+      // O aparelho (autenticado anonimamente) só consegue ler/gravar o
+      // próprio documento, e apenas os campos operacionais — nunca dados de
+      // outros clientes.
+      allow get: if isAparelhoAnonimo();
+      allow create, update: if isAparelhoAnonimo()
+        && request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys()
+             .hasOnly(['deviceId', 'fcmToken', 'kioskAtivo', 'ultimaSincronizacaoEm', 'versaoApp']);
     }
   }
 }

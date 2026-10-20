@@ -14,14 +14,16 @@ auth.onAuthStateChanged((user) => {
 document.getElementById("logout-btn").addEventListener("click", () => auth.signOut());
 
 // ---------------------------------------------------------------------------
-// Cadastro
+// Cadastro / completar configuração de aparelho pendente
 // ---------------------------------------------------------------------------
+let configurandoPendente = false;
+
 document.getElementById("cliente-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const imei = document.getElementById("imei").value.trim();
-  const termoAceito = document.getElementById("termoAceito").checked;
+  const termoAceitoMarcado = document.getElementById("termoAceito").checked;
 
-  if (!termoAceito) {
+  if (!configurandoPendente && !termoAceitoMarcado) {
     alert("O cliente precisa ter assinado o Termo de Adesão antes do cadastro.");
     return;
   }
@@ -32,29 +34,58 @@ document.getElementById("cliente-form").addEventListener("submit", async (e) => 
     imei,
     modelo: document.getElementById("modelo").value.trim(),
     valorParcela: parseFloat(document.getElementById("valor").value),
+    quantidadeParcelas: parseInt(document.getElementById("qtdParcelas").value, 10) || null,
     vencimento: document.getElementById("vencimento").value, // YYYY-MM-DD
+    horarioAlerta: document.getElementById("horarioAlerta").value || "09:00",
     pixKey: document.getElementById("pix").value.trim(),
-    status: "EM_DIA", // EM_DIA | ATRASADO | BLOQUEADO
-    termo: {
-      aceito: true,
-      versao: "1.0",
-      dataHoraISO: new Date().toISOString(),
-    },
+    status: "EM_DIA", // PENDENTE_CONFIGURACAO | EM_DIA | ATRASADO | BLOQUEADO
     criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
     criadoPor: auth.currentUser.uid,
   };
 
+  // Se o próprio aparelho já registrou o aceite do termo (fluxo automático),
+  // não sobrescreve isso — só preenche se ainda não tiver aceite registrado.
+  if (!configurandoPendente) {
+    data.termo = {
+      aceito: true,
+      versao: "1.0",
+      dataHoraISO: new Date().toISOString(),
+    };
+  }
+
   await db.collection("clientes").doc(imei).set(data, { merge: true });
 
-  // Garante que o doc de dispositivo exista (o app Android grava o fcmToken aqui
-  // na primeira sincronização, após o provisionamento via QR Code).
+  // Garante que o doc de dispositivo exista (o próprio app também grava o
+  // fcmToken aqui na primeira sincronização).
   await db.collection("dispositivos").doc(imei).set(
-    { imei, clienteId: imei, fcmToken: null, kioskAtivo: false },
+    { deviceId: imei, fcmToken: null, kioskAtivo: false },
     { merge: true }
   );
 
-  e.target.reset();
+  cancelarEdicao();
 });
+
+document.getElementById("btnCancelarEdicao").addEventListener("click", cancelarEdicao);
+
+function cancelarEdicao() {
+  configurandoPendente = false;
+  document.getElementById("cliente-form").reset();
+  document.getElementById("imei").readOnly = false;
+  document.getElementById("termoAceito").required = false;
+  document.getElementById("form-titulo").textContent = "Cadastrar cliente / aparelho";
+  document.getElementById("btnCancelarEdicao").hidden = true;
+}
+
+/** Abre o formulário pré-preenchido pra completar um aparelho pendente. */
+function configurarPendente(deviceId, termoDataHoraISO) {
+  configurandoPendente = true;
+  document.getElementById("imei").value = deviceId;
+  document.getElementById("imei").readOnly = true;
+  document.getElementById("termoAceito").checked = true;
+  document.getElementById("form-titulo").textContent = `Completar cadastro — aparelho ${deviceId}`;
+  document.getElementById("btnCancelarEdicao").hidden = false;
+  document.getElementById("cliente-form").scrollIntoView({ behavior: "smooth" });
+}
 
 // ---------------------------------------------------------------------------
 // Listagem em tempo real
@@ -63,10 +94,28 @@ function watchClientes() {
   db.collection("clientes")
     .orderBy("criadoEm", "desc")
     .onSnapshot((snapshot) => {
-      const tbody = document.getElementById("clientes-tbody");
-      tbody.innerHTML = "";
+      const pendentesTbody = document.getElementById("pendentes-tbody");
+      const clientesTbody = document.getElementById("clientes-tbody");
+      pendentesTbody.innerHTML = "";
+      clientesTbody.innerHTML = "";
+
       snapshot.forEach((doc) => {
         const c = doc.data();
+
+        if (c.status === "PENDENTE_CONFIGURACAO") {
+          const dataAceite = c.termo?.dataHoraISO
+            ? new Date(c.termo.dataHoraISO).toLocaleString("pt-BR")
+            : "-";
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><code>${escapeHtml(doc.id)}</code></td>
+            <td>${escapeHtml(dataAceite)}</td>
+            <td><button class="btn-configurar" data-id="${doc.id}">Configurar</button></td>
+          `;
+          pendentesTbody.appendChild(tr);
+          return;
+        }
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${escapeHtml(c.nome)}</td>
@@ -80,24 +129,29 @@ function watchClientes() {
             <button class="btn-link-aceite" data-imei="${c.imei}">Copiar link de aceite</button>
           </td>
         `;
-        tbody.appendChild(tr);
+        clientesTbody.appendChild(tr);
       });
 
-      tbody.querySelectorAll(".btn-bloquear").forEach((btn) =>
+      pendentesTbody.querySelectorAll(".btn-configurar").forEach((btn) =>
+        btn.addEventListener("click", () => configurarPendente(btn.dataset.id))
+      );
+      clientesTbody.querySelectorAll(".btn-bloquear").forEach((btn) =>
         btn.addEventListener("click", () => enviarComando(btn.dataset.imei, "BLOQUEAR"))
       );
-      tbody.querySelectorAll(".btn-desbloquear").forEach((btn) =>
+      clientesTbody.querySelectorAll(".btn-desbloquear").forEach((btn) =>
         btn.addEventListener("click", () => enviarComando(btn.dataset.imei, "DESBLOQUEAR"))
       );
-      tbody.querySelectorAll(".btn-link-aceite").forEach((btn) =>
+      clientesTbody.querySelectorAll(".btn-link-aceite").forEach((btn) =>
         btn.addEventListener("click", () => copiarLinkAceite(btn.dataset.imei))
       );
     });
 }
 
 // Link individual (por cliente) para a página pública de aceite do Termo de
-// Adesão (web/aceite.html). É esse link que você manda pro cliente — ele
-// mostra o termo de forma transparente antes de baixar o app.
+// Adesão (web/aceite.html) — opcional, útil quando você quer mostrar os
+// dados do cliente (valor, vencimento) ANTES do download. No fluxo
+// automático (aparelho se auto-registra), não é necessário usar isso: basta
+// mandar o link direto do APK.
 function copiarLinkAceite(imei) {
   const url = `${window.location.origin}/aceite.html?cliente=${encodeURIComponent(imei)}`;
   navigator.clipboard.writeText(url).then(

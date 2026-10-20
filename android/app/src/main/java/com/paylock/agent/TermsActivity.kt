@@ -55,6 +55,12 @@ class TermsActivity : AppCompatActivity() {
     private fun aceitarTermo() {
         prefs.edit().putBoolean(KEY_TERMO_ACEITO, true).apply()
 
+        // Auto-registro: o aparelho já se cadastra sozinho no Firestore como
+        // "aguardando configuração" assim que a pessoa aceita — o lojista só
+        // completa os dados comerciais (valor, vencimento, PIX, etc.) depois,
+        // direto no painel. Nenhum vínculo manual é necessário.
+        DeviceSync.registrarAutomaticamente(this)
+
         if (PayLockDeviceAdminReceiver.isDeviceOwner(this)) {
             // Caminho completo: aparelho foi provisionado (QR Code / ADB).
             DevicePolicyEnforcer(this).aplicarPoliticasIniciais()

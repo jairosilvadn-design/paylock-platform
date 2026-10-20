@@ -8,8 +8,8 @@ import androidx.appcompat.app.AppCompatActivity
 /**
  * Tela padrão do app. No primeiro uso, leva direto para o Termo de Adesão
  * (TermsActivity) — é lá que o fluxo "pessoa aceita → sistema executa"
- * acontece, tanto no caminho completo (Device Owner) quanto no simplificado
- * (Admin de Dispositivo).
+ * acontece, incluindo o auto-registro do aparelho (DeviceSync). Depois
+ * disso, só mostra o status — nenhum passo manual extra é necessário.
  */
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,19 +22,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Sem IMEI/código do cliente vinculado, o painel nunca saberia pra
-        // qual aparelho mandar os comandos — pede antes de seguir.
-        val imei = DeviceIdentity.obterImei(this)
-        if (imei == null) {
-            startActivity(Intent(this, VincularAparelhoActivity::class.java))
-            finish()
-            return
-        }
-
-        // Garante que o token FCM atual está salvo no Firestore sempre que o
-        // app abre (cobre o caso do Device Owner, que já sabe o IMEI desde o
-        // provisioning, mas ainda não tinha sincronizado o token).
-        DeviceSync.sincronizarTokenAtual(this, imei)
+        val deviceId = DeviceIdentity.obterDeviceId(this)
+        // Garante que o token FCM atual está salvo, sempre que o app abre.
+        DeviceSync.sincronizarTokenAtual(this, deviceId)
 
         val status = TextView(this).apply {
             textSize = 16f
@@ -47,7 +37,8 @@ class MainActivity : AppCompatActivity() {
                     else
                         "Modo: Admin de Dispositivo (simplificado).\n"
                 )
-                append("IMEI: ${DeviceIdentity.obterImei(this@MainActivity) ?: "não configurado"}")
+                append("Código do aparelho: $deviceId\n\n")
+                append("O lojista completará seu cadastro (valor, vencimento, PIX) no painel.")
             }
         }
         setContentView(status)
