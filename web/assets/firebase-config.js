@@ -4,10 +4,10 @@
 // valores. Ainda assim, prefira configurar via variável de ambiente da Netlify
 // e injetar no build quando possível.
 window.PAYLOCK_FIREBASE_CONFIG = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJETO",
-  storageBucket: "SEU_PROJETO.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID",
+  apiKey: "AIzaSyBqMxellJMnHLqfF0Q3qJB667B19uvkY1k",
+  authDomain: "paylock-platform.firebaseapp.com",
+  projectId: "paylock-platform",
+  storageBucket: "paylock-platform.firebasestorage.app",
+  messagingSenderId: "767471651819",
+  appId: "1:767471651819:web:5d446842131ee6a9fee7ae",
 };
