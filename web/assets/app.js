@@ -126,7 +126,6 @@ function watchClientes() {
           <td>
             <button class="btn-bloquear" data-imei="${c.imei}">Bloquear</button>
             <button class="btn-desbloquear" data-imei="${c.imei}">Desbloquear</button>
-            <button class="btn-link-aceite" data-imei="${c.imei}">Copiar link de aceite</button>
           </td>
         `;
         clientesTbody.appendChild(tr);
@@ -141,23 +140,7 @@ function watchClientes() {
       clientesTbody.querySelectorAll(".btn-desbloquear").forEach((btn) =>
         btn.addEventListener("click", () => enviarComando(btn.dataset.imei, "DESBLOQUEAR"))
       );
-      clientesTbody.querySelectorAll(".btn-link-aceite").forEach((btn) =>
-        btn.addEventListener("click", () => copiarLinkAceite(btn.dataset.imei))
-      );
     });
-}
-
-// Link individual (por cliente) para a página pública de aceite do Termo de
-// Adesão (web/aceite.html) — opcional, útil quando você quer mostrar os
-// dados do cliente (valor, vencimento) ANTES do download. No fluxo
-// automático (aparelho se auto-registra), não é necessário usar isso: basta
-// mandar o link direto do APK.
-function copiarLinkAceite(imei) {
-  const url = `${window.location.origin}/aceite.html?cliente=${encodeURIComponent(imei)}`;
-  navigator.clipboard.writeText(url).then(
-    () => alert("Link copiado:\n" + url),
-    () => prompt("Copie o link abaixo:", url)
-  );
 }
 
 // ---------------------------------------------------------------------------

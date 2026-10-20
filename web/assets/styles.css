@@ -100,8 +100,7 @@ th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid #e2e8f
 .badge-bloqueado { background: #fee2e2; color: var(--danger); }
 
 .btn-bloquear { background: var(--danger); color: white; margin-right: .4rem; }
-.btn-desbloquear { background: var(--success); color: white; margin-right: .4rem; }
-.btn-link-aceite { background: var(--accent); color: white; }
+.btn-desbloquear { background: var(--success); color: white; }
 
 .hint { color: var(--muted); font-size: .8rem; font-weight: normal; }
 #card-pendentes:has(#pendentes-tbody:empty) { display: none; }
