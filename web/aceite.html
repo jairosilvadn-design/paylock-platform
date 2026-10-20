@@ -106,6 +106,17 @@
         });
         if (!res.ok) throw new Error((await res.json()).error || "Erro ao registrar aceite");
 
+        // Copia o código do cliente pro clipboard do aparelho — o app, na
+        // primeira abertura, lê isso sozinho e já se vincula automaticamente
+        // (ver VincularAparelhoActivity.kt), sem a pessoa precisar digitar
+        // nada. Best-effort: se o navegador bloquear (precisa de gesto do
+        // usuário, que este clique já é), o app cai no modo manual.
+        try {
+          await navigator.clipboard.writeText(clienteId);
+        } catch (e) {
+          console.warn("Não foi possível copiar o código automaticamente:", e);
+        }
+
         window.location.href = APK_URL;
       } catch (err) {
         alert("Erro: " + err.message);
