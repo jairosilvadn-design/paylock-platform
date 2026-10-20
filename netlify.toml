@@ -3,6 +3,13 @@
   functions = "netlify/functions"
   command = "npm install"
 
+[build.environment]
+  # A chave do Firebase Web (AIza...) em web/assets/firebase-config.js é
+  # PÚBLICA por design (client SDK) — a segurança real está nas Firestore
+  # Rules, não no sigilo dela. Sem isso, o scanner de segredos da Netlify
+  # falha o build achando que é uma credencial vazada.
+  SECRETS_SCAN_OMIT_PATHS = "web/assets/firebase-config.js"
+
 [functions]
   node_bundler = "esbuild"
 
