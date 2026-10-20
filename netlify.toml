@@ -10,9 +10,8 @@
 # (Scheduled Functions é um recurso do plano pago da Netlify; em plano
 # gratuito, substitua por um "cron externo" chamando esta mesma URL via
 # GitHub Actions / cron-job.org — ver docs/DEPLOY.md.)
-[[functions]]
+[functions."check-overdue"]
   schedule = "@hourly"
-  path = "check-overdue"
 
 [[redirects]]
   from = "/"
