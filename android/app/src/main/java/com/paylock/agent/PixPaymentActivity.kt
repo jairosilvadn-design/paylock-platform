@@ -29,6 +29,7 @@ class PixPaymentActivity : AppCompatActivity() {
         setContentView(R.layout.activity_pix_payment)
 
         kioskModeManager = KioskModeManager(this)
+        PaymentState.carregarSeNecessario(this)
 
         findViewById<TextView>(R.id.tvValorPendente).text =
             "Valor pendente: R$ ${PaymentState.valor ?: "--"}"
