@@ -145,6 +145,7 @@ function watchClientes() {
           <td>
             <button class="btn-bloquear" data-imei="${c.imei}">Bloquear</button>
             <button class="btn-desbloquear" data-imei="${c.imei}">Desbloquear</button>
+            <button class="btn-quitar" data-imei="${c.imei}" title="Libera de vez (inclusive anti-desinstalação) — use só quando o financiamento foi totalmente pago">Quitar</button>
           </td>
         `;
         clientesTbody.appendChild(tr);
@@ -158,6 +159,13 @@ function watchClientes() {
       );
       clientesTbody.querySelectorAll(".btn-desbloquear").forEach((btn) =>
         btn.addEventListener("click", () => enviarComando(btn.dataset.imei, "DESBLOQUEAR"))
+      );
+      clientesTbody.querySelectorAll(".btn-quitar").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          if (confirm("Confirma a QUITAÇÃO deste financiamento? Isso libera o aparelho de vez, inclusive a proteção contra desinstalação.")) {
+            enviarComando(btn.dataset.imei, "QUITAR");
+          }
+        })
       );
     });
 }

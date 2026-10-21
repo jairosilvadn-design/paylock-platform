@@ -60,6 +60,11 @@ class DevicePolicyEnforcer(private val context: Context) {
      * "desbloqueio por pagamento da parcela do mês".
      */
     fun liberarRestricoesPorQuitacao() {
+        if (!PayLockDeviceAdminReceiver.isDeviceOwner(context)) {
+            Log.w(TAG, "App não é Device Owner — nada a liberar (modo simplificado nunca bloqueou nada).")
+            return
+        }
+
         dpm.clearUserRestriction(admin, UserManager.DISALLOW_FACTORY_RESET)
         dpm.clearUserRestriction(admin, UserManager.DISALLOW_DEBUGGING_FEATURES)
         dpm.clearUserRestriction(admin, UserManager.DISALLOW_ADD_USER)

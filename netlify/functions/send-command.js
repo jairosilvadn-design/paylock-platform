@@ -1,12 +1,19 @@
 // POST /.netlify/functions/send-command
-// Body: { imei: string, comando: "BLOQUEAR" | "DESBLOQUEAR" }
+// Body: { imei: string, comando: "BLOQUEAR" | "DESBLOQUEAR" | "QUITAR" }
 // Header: Authorization: Bearer <Firebase ID token do lojista logado>
 //
 // Só dispara o comando se o cliente tiver assinado o Termo de Adesão
 // (clientes/{imei}.termo.aceito === true). Atualiza o status no Firestore e
 // envia uma mensagem FCM "data-only" (sem notification) para o app Android,
 // que decide o que fazer com base no campo "comando".
+//
+// QUITAR é diferente de DESBLOQUEAR: além de desbloquear a tela, libera a
+// anti-desinstalação de vez (só tem efeito em aparelhos no modo Device
+// Owner completo) — é a ação de "financiamento quitado", não "pagou a
+// parcela do mês".
 const { db, messaging, verifyIdToken } = require("./_firebaseAdmin");
+
+const COMANDOS_VALIDOS = ["BLOQUEAR", "DESBLOQUEAR", "QUITAR"];
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -17,8 +24,8 @@ exports.handler = async (event) => {
     await verifyIdToken(event.headers.authorization || event.headers.Authorization);
 
     const { imei, comando } = JSON.parse(event.body || "{}");
-    if (!imei || !["BLOQUEAR", "DESBLOQUEAR"].includes(comando)) {
-      return { statusCode: 400, body: JSON.stringify({ error: "imei e comando (BLOQUEAR|DESBLOQUEAR) são obrigatórios" }) };
+    if (!imei || !COMANDOS_VALIDOS.includes(comando)) {
+      return { statusCode: 400, body: JSON.stringify({ error: `imei e comando (${COMANDOS_VALIDOS.join("|")}) são obrigatórios` }) };
     }
 
     const clienteRef = db.collection("clientes").doc(imei);
@@ -51,7 +58,8 @@ exports.handler = async (event) => {
       android: { priority: "high" },
     });
 
-    await clienteRef.update({ status: comando === "BLOQUEAR" ? "BLOQUEADO" : "EM_DIA" });
+    const novoStatus = comando === "BLOQUEAR" ? "BLOQUEADO" : comando === "QUITAR" ? "QUITADO" : "EM_DIA";
+    await clienteRef.update({ status: novoStatus });
     await dispositivoRef.update({ kioskAtivo: comando === "BLOQUEAR", ultimoComandoEm: new Date().toISOString() });
 
     return { statusCode: 200, body: JSON.stringify({ ok: true }) };

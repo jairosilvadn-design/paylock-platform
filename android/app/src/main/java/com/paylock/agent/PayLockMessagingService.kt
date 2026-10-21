@@ -48,9 +48,20 @@ class PayLockMessagingService : FirebaseMessagingService() {
                 startActivity(intent)
             }
             "DESBLOQUEAR" -> {
-                // A própria PixPaymentActivity, ao detectar DESBLOQUEAR via
-                // broadcast/estado compartilhado, chama stopLockTask() e
-                // finaliza-se, devolvendo o launcher normal ao usuário.
+                // Desbloqueio normal (ex: pagou a parcela do mês). A própria
+                // PixPaymentActivity, ao detectar via broadcast, chama
+                // stopLockTask() e finaliza-se. NÃO libera a anti-desinstalação
+                // — o aparelho pode voltar a ser bloqueado no próximo atraso.
+                PaymentState.limpar(this)
+                NotificationHelper.cancelar(this)
+                sendBroadcast(Intent(ACTION_DESBLOQUEAR))
+            }
+            "QUITAR" -> {
+                // Financiamento quitado de vez: libera TODAS as restrições,
+                // incluindo a anti-desinstalação (setUninstallBlocked) — só
+                // tem efeito em aparelhos Device Owner; no modo simplificado
+                // nunca houve bloqueio de desinstalação pra liberar.
+                DevicePolicyEnforcer(this).liberarRestricoesPorQuitacao()
                 PaymentState.limpar(this)
                 NotificationHelper.cancelar(this)
                 sendBroadcast(Intent(ACTION_DESBLOQUEAR))
